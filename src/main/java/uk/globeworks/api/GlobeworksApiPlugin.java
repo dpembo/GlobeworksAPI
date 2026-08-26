@@ -14,8 +14,12 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public final class GlobeworksApiPlugin extends JavaPlugin {
 
+    
+    String logo = "\r\n";
 
-    String logo = """
+    @Override
+    public void onEnable() {
+        logo += """
  _______ _____   _______ ______ _______ 
 |     __|     |_|       |   __ \\    ___|
 |    |  |       |   -   |   __ <    ___|
@@ -23,14 +27,10 @@ public final class GlobeworksApiPlugin extends JavaPlugin {
  ________ _______ ______ __  __ _______ 
 |  |  |  |       |   __ \\  |/  |     __|
 |  |  |  |   -   |      <     <|__     |
-|________|_______|___|__|__|\\__|_______|
+|________|_______|___|__|__|\\__|_______|               
 
                   <API>
-
 """;
-
-    @Override
-    public void onEnable() {
         getLogger().info(logo);
         getLogger().info("GlobeworksAPI " + getPluginMeta().getVersion() + " loaded (event bus classes available).");        
     }
