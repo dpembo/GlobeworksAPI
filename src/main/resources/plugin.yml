@@ -1,0 +1,7 @@
+name: GlobeworksAPI
+version: '${version}'
+main: uk.globeworks.api.GlobeworksApiPlugin
+api-version: '26.2'
+author: Globeworks
+description: Shared event bus and data types for Globeworks cross-plugin communication.
+website: https://globeworks.uk
