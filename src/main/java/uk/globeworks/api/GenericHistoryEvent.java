@@ -23,6 +23,10 @@ import java.util.function.Consumer;
  * Consumers must return quickly; any real work (DB, HTTP, file I/O)
  * should be handed off via {@link #handleAsync(Plugin, GenericHistoryEvent, Consumer)}.
  * <p>
+ * This event is <b>async-capable</b> ({@code super(true)}) so it may be fired
+ * from Towny daily tasks, Folia async schedulers, etc. without hitting
+ * Paper's "may only be triggered synchronously" guard.
+ * <p>
  * <b>Subject model (hybrid):</b>
  * <ul>
  *   <li>Nation-scoped events → set {@link #getNation()}, leave subject null
@@ -53,6 +57,7 @@ public final class GenericHistoryEvent extends Event {
             @NotNull Instant timestamp,
             @NotNull String eventId
     ) {
+        super(true); // allow firing from async threads (Towny daily, Folia, etc.)
         this.nation = nation;
         this.subject = subject;
         this.eventType = Objects.requireNonNull(eventType, "eventType");
@@ -119,7 +124,7 @@ public final class GenericHistoryEvent extends Event {
 
     /**
      * Hand off real work to an async task. Call this from a listener instead of
-     * doing blocking work on the main thread.
+     * doing blocking work on the event thread.
      *
      * <pre>{@code
      * @EventHandler
@@ -138,7 +143,13 @@ public final class GenericHistoryEvent extends Event {
         Objects.requireNonNull(plugin, "plugin");
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(work, "work");
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> work.accept(event));
+
+        // Prefer Paper/Folia async scheduler when available; fall back to classic
+        try {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> work.accept(event));
+        } catch (NoSuchMethodError | UnsupportedOperationException e) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> work.accept(event));
+        }
     }
 
     /**
@@ -150,7 +161,12 @@ public final class GenericHistoryEvent extends Event {
     ) {
         Objects.requireNonNull(plugin, "plugin");
         Objects.requireNonNull(work, "work");
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, work);
+
+        try {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> work.run());
+        } catch (NoSuchMethodError | UnsupportedOperationException e) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, work);
+        }
     }
 
     // -------------------------------------------------------------------------
